@@ -1,4 +1,4 @@
-package multitech
+package main
 
 import (
 	"net/http"
