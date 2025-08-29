@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"multitech/internal/config"
 	"multitech/internal/models"
 	"multitech/middleware"
@@ -11,14 +10,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	config.LoadEnv()
 	storage.InitRedis()
