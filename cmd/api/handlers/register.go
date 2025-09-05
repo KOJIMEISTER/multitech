@@ -10,7 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterHandler(ctx *gin.Context) {
+type RegisterHandler struct {
+	userRepo storage.UserRepository
+}
+
+func NewRegisterHandler(userRepo storage.UserRepository) *RegisterHandler {
+	return &RegisterHandler{
+		userRepo: userRepo,
+	}
+}
+
+func (register *RegisterHandler) Handler(ctx *gin.Context) {
 	var user models.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -28,7 +38,7 @@ func RegisterHandler(ctx *gin.Context) {
 		return
 	}
 
-	if err := storage.CreateUser(ctx.Request.Context(), &user); err != nil {
+	if err := register.userRepo.CreateUser(ctx.Request.Context(), &user); err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			ctx.JSON(http.StatusConflict, gin.H{
 				"error": "User already exists",

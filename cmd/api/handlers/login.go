@@ -11,7 +11,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoginHandler(ctx *gin.Context) {
+type LoginHandler struct {
+	userRepo storage.UserRepository
+	sessRepo storage.SessionsRepository
+}
+
+func NewLoginHandler(userRepo storage.UserRepository, sessRepo storage.SessionsRepository) *LoginHandler {
+	return &LoginHandler{
+		userRepo: userRepo,
+		sessRepo: sessRepo,
+	}
+}
+
+func (login *LoginHandler) Handler(ctx *gin.Context) {
 	var creds models.LoginCredentials
 	if err := ctx.ShouldBindJSON(&creds); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -20,11 +32,11 @@ func LoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByUsername(ctx.Request.Context(), creds.Username)
+	user, err := login.userRepo.GetUserByUsername(ctx.Request.Context(), creds.Username)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid credentials",
+				"error": storage.ErrUserNotFound.Error(),
 			})
 			return
 		}
@@ -49,16 +61,17 @@ func LoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	if err := storage.StoreSession(ctx.Request.Context(), token, user.ID, 24*time.Hour); err != nil {
+	if err := login.sessRepo.StoreSession(ctx.Request.Context(), token, user.ID, 24*time.Hour); err != nil {
 		if errors.Is(err, storage.ErrSessionExists) {
 			ctx.JSON(http.StatusConflict, gin.H{
-				"error": "Session already exists",
+				"error": storage.ErrSessionExists.Error(),
 			})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error creating session: " + err.Error(),
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{

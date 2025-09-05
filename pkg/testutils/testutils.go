@@ -24,7 +24,7 @@ func SetJSONBody(ctx *gin.Context, body string) {
 	ctx.Request.Body = io.NopCloser(strings.NewReader(body))
 }
 
-func CaptureOrigingEnv() *map[string]string {
+func CaptureOriginEnv() *map[string]string {
 	envs := make(map[string]string)
 	for _, env := range os.Environ() {
 		if idx := strings.Index(env, "="); idx >= 0 {

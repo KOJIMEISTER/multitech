@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"multitech/pkg/storage"
 	"net/http"
 	"os"
 	"strings"
@@ -10,17 +11,27 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type AuthMiddleware struct {
+	sessRepo storage.SessionsRepository
+}
+
+func NewAuthMiddleware(sessRepo storage.SessionsRepository) *AuthMiddleware {
+	return &AuthMiddleware{
+		sessRepo: sessRepo,
+	}
+}
+
 type Claims struct {
 	UserID uint `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func AuthMiddleware() gin.HandlerFunc {
+func (auth *AuthMiddleware) Middleware() gin.HandlerFunc {
 	secret := os.Getenv("JWT_SECRET")
-	return func(context *gin.Context) {
-		authHeader := context.GetHeader("Authorization")
+	return func(ctx *gin.Context) {
+		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
-			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			return
 		}
 
@@ -30,18 +41,23 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil {
-			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
 		claims, ok := token.Claims.(*Claims)
 		if !ok {
-			context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			return
 		}
 
-		context.Set("user_id", claims.UserID)
-		context.Next()
+		if _, err = auth.sessRepo.GetSession(ctx, tokenString); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired session"})
+			return
+		}
+
+		ctx.Set("user_id", claims.UserID)
+		ctx.Next()
 	}
 }
 

@@ -1,4 +1,4 @@
-package testutils
+package mocks
 
 import (
 	"os"
@@ -28,7 +28,7 @@ func (mock *EnvMock) Get(key string) string {
 	return mock.store[key]
 }
 
-func (mock *EnvMock) Apply(key string) {
+func (mock *EnvMock) Apply() {
 	mock.mtx.Lock()
 	defer mock.mtx.Unlock()
 	for key, value := range mock.store {

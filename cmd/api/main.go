@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"multitech/cmd/api/handlers"
 	"multitech/internal/config"
 	"multitech/middleware"
@@ -13,17 +14,29 @@ func main() {
 
 	config.LoadEnv()
 
-	storage.InitRedis()
+	redisClient, err := storage.InitRedis()
+	if err != nil {
+		log.Fatalf("Error init redis: %v", err)
+		return
+	}
+
+	userRepo := storage.NewUserRepository(redisClient)
+	sessRepo := storage.NewSessionRepository(redisClient)
+
+	healthCheck := handlers.NewHealthCheck(redisClient)
+	loginHandler := handlers.NewLoginHandler(userRepo, sessRepo)
+	registerHandler := handlers.NewRegisterHandler(userRepo)
+	protectedHandler := handlers.NewProtectedHandler()
+
+	authMiddleware := middleware.NewAuthMiddleware(sessRepo)
 
 	router := gin.Default()
 
-	router.GET("/health", handlers.HealthCheck)
+	router.GET("/health", healthCheck.Handler)
+	router.GET("/protected", authMiddleware.Middleware(), protectedHandler.Handler)
 
-	router.POST("/register", handlers.RegisterHandler)
-
-	router.POST("/login", handlers.LoginHandler)
-
-	router.GET("/protected", middleware.AuthMiddleware(), handlers.ProtectedHandler)
+	router.POST("/login", loginHandler.Handler)
+	router.POST("/register", registerHandler.Handler)
 
 	router.Run(":8080")
 }

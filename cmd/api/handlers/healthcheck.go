@@ -1,14 +1,24 @@
 package handlers
 
 import (
-	"multitech/pkg/storage"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
-func HealthCheck(ctx *gin.Context) {
-	err := storage.RedisClient.Ping(ctx.Request.Context()).Err()
+type HealthCheck struct {
+	redisClient *redis.Client
+}
+
+func NewHealthCheck(redisClient *redis.Client) *HealthCheck {
+	return &HealthCheck{
+		redisClient: redisClient,
+	}
+}
+
+func (health *HealthCheck) Handler(ctx *gin.Context) {
+	err := health.redisClient.Ping(ctx.Request.Context()).Err()
 	if err != nil {
 		ctx.JSON(http.StatusServiceUnavailable, gin.H{
 			"status": "unhealthy",
