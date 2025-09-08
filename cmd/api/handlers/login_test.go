@@ -105,10 +105,10 @@ func TestLoginHandler(t *testing.T) {
 				if strings.Contains(tt.expectedBody, "*") {
 					var expected, actual map[string]interface{}
 					if err := json.Unmarshal([]byte(tt.expectedBody), &expected); err != nil {
-						t.Fatalf("failed to parse expected JSON: %v", err)
+						t.Fatalf("Failed to parse expected JSON: %v", err)
 					}
 					if err := json.Unmarshal(recorder.Body.Bytes(), &actual); err != nil {
-						t.Fatalf("failed to parse expected JSON: %v", err)
+						t.Fatalf("Failed to parse expected JSON: %v", err)
 					}
 					for key, value := range expected {
 						if strVal, ok := value.(string); ok && strVal == "*" {
