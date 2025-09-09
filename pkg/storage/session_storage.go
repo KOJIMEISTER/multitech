@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	ErrInvalidData   = errors.New("invalid data")
-	ErrSessionExists = errors.New("session already exists")
+	ErrInvalidData     = errors.New("Invalid data")
+	ErrSessionExists   = errors.New("Session already exists")
+	ErrSessionNotFound = errors.New("nvalid or expired session")
 )
 
 type SessionsRepository interface {

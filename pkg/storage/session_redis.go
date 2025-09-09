@@ -36,7 +36,7 @@ func (sessRepo *sessionRepository) GetSession(ctx context.Context, token string)
 	userID, err := sessRepo.client.Get(ctx, sessionKey(token)).Uint64()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return 0, ErrUserNotFound
+			return 0, ErrSessionNotFound
 		}
 		return 0, fmt.Errorf("redis error: %w", err)
 	}
