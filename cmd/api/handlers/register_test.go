@@ -24,7 +24,7 @@ func TestRegisterHandler(t *testing.T) {
 	}{
 		{
 			name:        "Success",
-			requestBody: `{"id": 1, "username": "user", "email": "test@mail.com", "password": "testpass", "createdat": "*", "updatedat": "*"}`,
+			requestBody: `{"username": "user", "email": "test@mail.com", "password": "testpass", "user_id":"*"}`,
 			mockUserSetup: func(mur *mocks.MockUserRepository) {
 				mur.CreateUserFunc = func(ctx context.Context, user *models.User) error {
 					return nil
@@ -34,7 +34,7 @@ func TestRegisterHandler(t *testing.T) {
 				em.Set("JWT_SECRET", "testsecret")
 			},
 			expectedStatus: http.StatusCreated,
-			expectedBody:   `{"message":"User created successfully","user_id":1}`,
+			expectedBody:   `{"message":"User created successfully","user_id":"*"}`,
 		},
 	}
 

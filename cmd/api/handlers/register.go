@@ -20,16 +20,32 @@ func NewRegisterHandler(userRepo storage.UserRepository) *RegisterHandler {
 	}
 }
 
+// @Summary Register new user
+// @Description Create a new user account
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body models.RegisterCredentials true "User registration data"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 409 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /register [post]
 func (register *RegisterHandler) Handler(ctx *gin.Context) {
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var regCreds models.RegisterCredentials
+	if err := ctx.ShouldBindJSON(&regCreds); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	user.CreatedAt = time.Now()
+	user := models.User{
+		Username:  regCreds.Username,
+		Email:     regCreds.Email,
+		Password:  regCreds.Password,
+		CreatedAt: time.Now(),
+	}
 
 	if err := user.HashPassword(); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{

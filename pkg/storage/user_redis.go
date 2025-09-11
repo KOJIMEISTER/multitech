@@ -9,6 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const userIDCounterKey = "user:id:counter"
+
 type userRepository struct {
 	client *redis.Client
 }
@@ -27,6 +29,12 @@ func (userRepo *userRepository) CreateUser(ctx context.Context, user *models.Use
 	if exists == 1 {
 		return ErrUserExists
 	}
+
+	userID, err := userRepo.GetNextUserID(ctx)
+	if err != nil {
+		return err
+	}
+	user.ID = userID
 
 	userData := map[string]interface{}{
 		"id":         user.ID,
@@ -64,6 +72,14 @@ func (userRepo *userRepository) GetUserByUsername(ctx context.Context, username 
 		Password:  data["password"],
 		CreatedAt: createdAt,
 	}, nil
+}
+
+func (userRepo *userRepository) GetNextUserID(ctx context.Context) (uint, error) {
+	id, err := userRepo.client.Incr(ctx, userIDCounterKey).Uint64()
+	if err != nil {
+		return 0, fmt.Errorf("Redis error generating user ID: %w", err)
+	}
+	return uint(id), nil
 }
 
 func userKey(username string) string {

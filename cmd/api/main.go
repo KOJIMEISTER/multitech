@@ -1,13 +1,26 @@
 package main
 
+// @title Mutitech API
+// @version 1.0
+// @description API for Multitech application
+// @host localhost:8080
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
+// @BasePath /
+
 import (
 	"log"
 	"multitech/cmd/api/handlers"
+	_ "multitech/docs"
 	"multitech/internal/config"
 	"multitech/middleware"
 	"multitech/pkg/storage"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -32,6 +45,7 @@ func main() {
 
 	router := gin.Default()
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/health", healthCheck.Handler)
 	router.GET("/protected", authMiddleware.Middleware(), protectedHandler.Handler)
 

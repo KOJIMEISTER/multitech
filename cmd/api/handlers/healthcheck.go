@@ -17,6 +17,12 @@ func NewHealthCheck(redisClient *redis.Client) *HealthCheck {
 	}
 }
 
+// @Summary Health check
+// @Description Check if the service is running
+// @Tags system
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /health [get]
 func (health *HealthCheck) Handler(ctx *gin.Context) {
 	err := health.redisClient.Ping(ctx.Request.Context()).Err()
 	if err != nil {

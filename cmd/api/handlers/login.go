@@ -23,6 +23,17 @@ func NewLoginHandler(userRepo storage.UserRepository, sessRepo storage.SessionsR
 	}
 }
 
+// @Summary User login
+// @Description Authenticate user and return JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body models.LoginCredentials true "Login credentials"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /login [post]
 func (login *LoginHandler) Handler(ctx *gin.Context) {
 	var creds models.LoginCredentials
 	if err := ctx.ShouldBindJSON(&creds); err != nil {
