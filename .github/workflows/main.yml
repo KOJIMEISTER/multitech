@@ -23,8 +23,10 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Run tests
-        run: go test  ./...
+      - name: Run tests with coverage
+        run: |
+          go test -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
 
       - name: Build
         run: go build ./cmd/api/...
