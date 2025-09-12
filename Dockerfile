@@ -5,6 +5,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+#RUN go install github.com/swaggo/swag/cmd/swag@latest
+#RUN swag init -g cmd/api/main.go --outputTypes json,yaml --parseDependency --parseInternal
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/main ./cmd/api
 
 # Final
