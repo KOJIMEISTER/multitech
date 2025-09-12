@@ -11,12 +11,18 @@ package main
 // @BasePath /
 
 import (
+	"context"
 	"log"
 	"multitech/cmd/api/handlers"
 	_ "multitech/docs"
 	"multitech/internal/config"
 	"multitech/middleware"
 	"multitech/pkg/storage"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -52,5 +58,33 @@ func main() {
 	router.POST("/login", loginHandler.Handler)
 	router.POST("/register", registerHandler.Handler)
 
-	router.Run(":8080")
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Println("Server forced to shudown:", err)
+	}
+
+	if err := redisClient.Close(); err != nil {
+		log.Println("Error closing Redis:", err)
+	}
+
+	log.Println("Server exiting")
+
 }
