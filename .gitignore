@@ -2,3 +2,4 @@ bin/
 .env
 TODO
 .vscode/
+swagger.json
