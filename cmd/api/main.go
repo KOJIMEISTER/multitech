@@ -39,8 +39,13 @@ func main() {
 		return
 	}
 
-	userRepo := storage.NewUserRepository(redisClient)
-	sessRepo := storage.NewSessionRepository(redisClient)
+	// postgresClient, err := storage.InitPostgres()
+	// if err != nil {
+	// 	log.Fatalf("PostgreSQL init error: %v", err)
+	// }
+
+	userRepo := storage.NewRedisUserRepository(redisClient)
+	sessRepo := storage.NewRedisSessionRepository(redisClient)
 
 	healthCheck := handlers.NewHealthCheck(redisClient)
 	loginHandler := handlers.NewLoginHandler(userRepo, sessRepo)

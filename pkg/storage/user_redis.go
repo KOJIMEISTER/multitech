@@ -15,7 +15,7 @@ type userRepository struct {
 	client *redis.Client
 }
 
-func NewUserRepository(client *redis.Client) UserRepository {
+func NewRedisUserRepository(client *redis.Client) UserRepository {
 	return &userRepository{
 		client: client,
 	}

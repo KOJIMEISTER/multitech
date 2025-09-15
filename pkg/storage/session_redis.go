@@ -13,7 +13,7 @@ type sessionRepository struct {
 	client *redis.Client
 }
 
-func NewSessionRepository(client *redis.Client) SessionsRepository {
+func NewRedisSessionRepository(client *redis.Client) SessionsRepository {
 	return &sessionRepository{
 		client: client,
 	}
