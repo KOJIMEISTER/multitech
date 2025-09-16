@@ -39,12 +39,12 @@ func main() {
 		return
 	}
 
-	// postgresClient, err := storage.InitPostgres()
-	// if err != nil {
-	// 	log.Fatalf("PostgreSQL init error: %v", err)
-	// }
+	postgresClient, err := storage.InitPostgres()
+	if err != nil {
+		log.Fatalf("PostgreSQL init error: %v", err)
+	}
 
-	userRepo := storage.NewRedisUserRepository(redisClient)
+	userRepo := storage.NewGormUserRepository(postgresClient)
 	sessRepo := storage.NewRedisSessionRepository(redisClient)
 
 	healthCheck := handlers.NewHealthCheck(redisClient)

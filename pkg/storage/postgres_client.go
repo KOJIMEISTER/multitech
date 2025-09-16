@@ -1,23 +1,24 @@
 package storage
 
 import (
-	"context"
 	"os"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func InitPostgres() (*pgxpool.Pool, error) {
-	config, err := pgxpool.ParseConfig(os.Getenv("POSTGRES_URL"))
+func InitPostgres() (*gorm.DB, error) {
+	dsn := os.Getenv("POSTGRES_URL")
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
 
-	err = pool.Ping(context.Background())
-	return pool, err
+	err = sqlDB.Ping()
+	return db, err
 }
