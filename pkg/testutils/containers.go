@@ -55,3 +55,24 @@ func SetupContainers(ctx context.Context) (*TestContainers, error) {
 		RedisURL:          redisUrl,
 	}, nil
 }
+
+func (tc *TestContainers) Terminate(ctx context.Context) error {
+	var errs []error
+
+	if tc.PostgresContainer != nil {
+		if err := tc.PostgresContainer.Terminate(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("Failed to terminate Postgres: %w", err))
+		}
+	}
+
+	if tc.RedisContainer != nil {
+		if err := tc.RedisContainer.Terminate(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("Failed to terminate Redis: %w", err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("Container termination errors: %v", errs)
+	}
+	return nil
+}
