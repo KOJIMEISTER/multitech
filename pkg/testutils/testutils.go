@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"multitech/internal/models"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -73,6 +74,12 @@ func InitTestRedis(url string) *redis.Client {
 		log.Fatal(initErr)
 	}
 	return TestRedis
+}
+
+func RunMigrations(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.User{},
+	)
 }
 
 func NewTestContext() (*gin.Context, *httptest.ResponseRecorder) {

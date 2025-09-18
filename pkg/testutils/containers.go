@@ -24,7 +24,7 @@ func SetupContainers(ctx context.Context) (*TestContainers, error) {
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
 		testcontainers.WithWaitStrategy(
-			wait.ForLog("Database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
+			wait.ForLog("ready to accept connections").WithOccurrence(1).WithStartupTimeout(30*time.Second),
 		))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start postgres: %w", err)
@@ -37,7 +37,7 @@ func SetupContainers(ctx context.Context) (*TestContainers, error) {
 
 	redisContainer, err := redis.Run(ctx, "redis:7-alpine",
 		testcontainers.WithWaitStrategy(
-			wait.ForLog("Ready to accept connections").WithStartupTimeout(30*time.Second),
+			wait.ForLog("Ready to accept connections").WithOccurrence(1).WithStartupTimeout(30*time.Second),
 		))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start redis: %w", err)
