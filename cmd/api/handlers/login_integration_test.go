@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"multitech/internal/models"
 	"multitech/pkg/storage"
 	"multitech/pkg/testutils"
@@ -13,24 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
-	containers, err := testutils.SetupContainers(ctx)
-	if err != nil {
-		fmt.Printf("Failed to setup containers: %v", err)
-		os.Exit(1)
-	}
-	defer containers.Terminate(ctx)
-
-	testutils.InitTestDB(containers.PostgresDSN)
-	testutils.InitTestRedis(containers.RedisURL)
-
-	testutils.RunMigrations(testutils.TestDB)
-
-	os.Exit(m.Run())
-}
 
 func TestLoginHandlerSuccess(t *testing.T) {
 	tx := testutils.TestDB.Begin()
