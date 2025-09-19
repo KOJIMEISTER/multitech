@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"multitech/internal/models"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -27,8 +28,11 @@ func (userRepo *gormUserRepository) GetUserByUsername(ctx context.Context, usern
 
 func (userRepo *gormUserRepository) CreateUser(ctx context.Context, user *models.User) error {
 	err := userRepo.WithContext(ctx).Create(user).Error
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
-		return ErrUserExists
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			return ErrUserExists
+		}
+		return err
 	}
-	return err
+	return nil
 }

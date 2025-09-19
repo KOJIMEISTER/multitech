@@ -59,3 +59,45 @@ func TestRegisterHandlerDuplicateUsername(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, recorder.Code)
 	assert.JSONEq(t, `{"error":"User already exists"}`, recorder.Body.String())
 }
+
+func TestRegisterHandlerInvalidData(t *testing.T) {
+	tx := testutils.TestDB.Begin()
+	defer tx.Rollback()
+
+	userRepo := storage.NewGormUserRepository(tx)
+
+	testCases := []struct {
+		name          string
+		requestBody   string
+		expectedError string
+	}{
+		{
+			name:          "Empty Username",
+			requestBody:   `{"username":"","email":"test@example.com","password":"password123"}`,
+			expectedError: `{"error":"Username must be at least 3 characters"}`,
+		},
+		{
+			name:          "Invalid Email",
+			requestBody:   `{"username":"testuser","email":"notanemail","password":"password123"}`,
+			expectedError: `{"error":"Invalid email format"}`,
+		},
+		{
+			name:          "Short Password",
+			requestBody:   `{"username":"testuser","email":"test@example.com","password":"short"}`,
+			expectedError: `{"error":"Password must be at least 8 characters"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, recorder := testutils.NewTestContext()
+			testutils.SetJSONBody(ctx, tc.requestBody)
+
+			handler := NewRegisterHandler(userRepo)
+			handler.Handler(ctx)
+
+			assert.Equal(t, http.StatusBadRequest, recorder.Code)
+			assert.JSONEq(t, tc.expectedError, recorder.Body.String())
+		})
+	}
+}

@@ -2,12 +2,24 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"multitech/internal/models"
 	"multitech/pkg/storage"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	minPasswordLength = 8
+	maxPasswordLength = 254
+	minUsernameLength = 3
+	maxUsernameLength = 254
+	minEmailLength    = 3
+	maxEmailLength    = 254
+	emailRegexPattern = `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
 )
 
 type RegisterHandler struct {
@@ -34,6 +46,27 @@ func NewRegisterHandler(userRepo storage.UserRepository) *RegisterHandler {
 func (register *RegisterHandler) Handler(ctx *gin.Context) {
 	var regCreds models.RegisterCredentials
 	if err := ctx.ShouldBindJSON(&regCreds); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if len(regCreds.Password) < minPasswordLength {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
+		})
+		return
+	}
+
+	if len(regCreds.Username) < minUsernameLength {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Username must be at least %d characters", minUsernameLength),
+		})
+		return
+	}
+
+	if err := register.validateEmail(regCreds.Email); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -71,4 +104,16 @@ func (register *RegisterHandler) Handler(ctx *gin.Context) {
 		"message": "User created successfully",
 		"user_id": user.ID,
 	})
+}
+
+func (register *RegisterHandler) validateEmail(email string) error {
+	if len(email) < minEmailLength || len(email) > maxEmailLength {
+		return fmt.Errorf("Email must be between %d-%d characters", minEmailLength, maxEmailLength)
+	}
+
+	matched, err := regexp.MatchString(emailRegexPattern, email)
+	if err != nil || !matched {
+		return errors.New("Invalid email format")
+	}
+	return nil
 }
