@@ -3,37 +3,53 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  tests:
-    runs-on: [self-hosted, Linux, X64]
-    services:
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
-
+  setup:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.23.4"
-
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Run tests with coverage
-        run: |
-          go test -coverprofile=coverage.txt -covermode=atomic -coverpkg=./cmd/...,./internal/...,./pkg/storage/...,./middleware/... ./...
-          go tool cover -func=coverage.txt
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - run: go clean -modcache
+      - uses: actions/cache@v4
         with:
-          flags: unittests
-          name: github-actions
+          path: ~/go/pkg/mod
+          key: ${{runner.os}}-go-${{hashFiles('**/go.sum')}}
+          restore-keys: |
+            ${{runner.os}}-go-
+      - run: go mod download
+
+  unit-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.23.4"
+      - run: |
+          go test -coverprofile=unit-coverage.txt -covermode=atomic \
+          -coverpkg=./cmd/...,./internal/...,./pkg/storage/...,./middleware/... \
+          $(go list -f '{{.Dir}}' ./... | xargs -I {} find {} -name "*_test.go" ! -name "*_integration_test.go" | xargs dirname | sort -u)
+
+      - uses: codecov/codecov-action@v5
+        with:
+          files: unit-coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Build
-        run: go build ./cmd/api/...
+  integration-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.23.4"
+      - run: |
+          go test -coverprofile=integration-coverage.txt -covermode=atomic \
+          -coverpkg=./cmd/...,./internal/...,./pkg/storage/...,./middleware/... \
+          $(go list -f '{{.Dir}}' ./... | xargs -I {} find {} -name "*_integration_test.go" | xargs dirname | sort -u)
+      - uses: codecov/codecov-action@v5
+        with:
+          files: integration-coverage.txt
+          token: ${{secrets.CODECOV_TOKEN}}
